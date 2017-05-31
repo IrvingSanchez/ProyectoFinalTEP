@@ -19,6 +19,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class EditarActivity extends AppCompatActivity {
 
@@ -26,10 +27,11 @@ public class EditarActivity extends AppCompatActivity {
     EditText nombre, apellido, telefono, email;
     Spinner spinner;
     String sNombre, sApellido, sTelefono, sEmail, sCiudad;
-    int posicion;
-    String urlws;
+    String urlws, contacto;
     static ArrayList<String> data = new ArrayList<String>();
+    ArrayList<String> lista;
 
+    Boolean esNuevo;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,17 +42,52 @@ public class EditarActivity extends AppCompatActivity {
         telefono = (EditText) findViewById(R.id.telefonoEditar);
         email = (EditText) findViewById(R.id.emailEditar);
         spinner = (Spinner) findViewById(R.id.spinner);
-
-        posicion = getIntent().getExtras().getInt("posicion");
-        String s = getIntent().getExtras().getSerializable("contacto").toString();
-        sNombre = s.substring(0,s.indexOf("\n"));
-        s = s.substring((s.indexOf("\n")+1),s.length());
-        sTelefono = s.substring(0,s.indexOf("\n"));
-        sEmail = s.substring((s.indexOf("\n")+1),s.length());
-
         tb = (Toolbar)findViewById(R.id.toolbarEditar);
         setSupportActionBar(tb);
-        tb.setTitle(sNombre);
+
+        //Obtener datos de wb
+
+        SharedPreferences preferencias = getSharedPreferences("Preferencias",MODE_PRIVATE);
+
+
+        String WS_REGION = preferencias.getString("region","");
+        urlws = preferencias.getString("url","") + Uri.encode(WS_REGION);
+        new ProcessJson().execute(urlws);
+
+
+        esNuevo = getIntent().getExtras().getBoolean("nuevo",false);
+        lista = (ArrayList<String>) getIntent().getExtras().get("lista");
+        // Editar
+        if (!esNuevo) {
+            //posicion = getIntent().getExtras().getInt("posicion");
+            //lista = (ArrayList<String>) getIntent().getExtras().get("lista");
+
+            contacto = getIntent().getExtras().getString("contacto");
+            String s = contacto;
+            sNombre = s.substring(0, s.indexOf("\n"));
+            if (sNombre.contains(",")){
+                sCiudad = sNombre.substring((sNombre.indexOf(",")+1));
+                sNombre = sNombre.substring(0,sNombre.indexOf(","));
+
+
+            }
+            s = s.substring((s.indexOf("\n") + 1), s.length());
+            sTelefono = s.substring(0, s.indexOf("\n"));
+            sEmail = s.substring((s.indexOf("\n") + 1), s.length());
+
+            tb.setTitle(sNombre);
+            nombre.setText(sNombre);
+            telefono.setText(sTelefono);
+            email.setText(sEmail);
+
+
+        }
+        else // es nuevo
+        {
+            lista = (ArrayList<String>) getIntent().getExtras().get("lista");
+        }
+
+
         tb.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -61,20 +98,7 @@ public class EditarActivity extends AppCompatActivity {
             }
         });
 
-        //  mostrar datos en controles
 
-        nombre.setText(sNombre);
-        telefono.setText(sTelefono);
-        email.setText(sEmail);
-
-        //Obtener datos de wb
-
-        SharedPreferences preferencias = getSharedPreferences("Preferencias",MODE_PRIVATE);
-
-
-        String WS_REGION = preferencias.getString("region","");
-        urlws = preferencias.getString("url","") + Uri.encode(WS_REGION);
-        new ProcessJson().execute(urlws);
 
     }
 
@@ -89,9 +113,13 @@ public class EditarActivity extends AppCompatActivity {
         String resultdo = sNombre + " " + sApellido +", " + sCiudad + "\n" +
                 sTelefono + "\n" + sEmail;
 
+        if (!esNuevo)
+            lista.remove(contacto);
+        lista.add(resultdo);
+        Collections.sort(lista);
+
         Intent i = new Intent(this, ContactosActivity.class);
-        i.putExtra("editado",resultdo);
-        i.putExtra("posicion",posicion);
+        i.putExtra("lista",lista);
         Toast.makeText(this,"Guardando cambios...",Toast.LENGTH_SHORT).show();
         startActivity(i);
         this.finish();
@@ -133,5 +161,12 @@ public class EditarActivity extends AppCompatActivity {
         }
     }
 
-
+    @Override
+    public void onBackPressed() {
+        Intent i = new Intent(this, ContactosActivity.class);
+        i.putExtra("lista",lista);
+        Toast.makeText(this,"Cargando agenda...",Toast.LENGTH_SHORT).show();
+        startActivity(i);
+        this.finish();
+    }
 }

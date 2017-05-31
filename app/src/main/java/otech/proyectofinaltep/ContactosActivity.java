@@ -16,6 +16,8 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -23,6 +25,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -33,6 +36,7 @@ import java.util.Collections;
 public class ContactosActivity extends AppCompatActivity {
 
     public ListView lv;
+    EditText buscar;
     Toolbar tb;
     ArrayList<String> listagente;
     ArrayAdapter<String> adapter;
@@ -42,8 +46,7 @@ public class ContactosActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contactos);
 
-
-
+        buscar = (EditText) findViewById(R.id.buscar);
         tb = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(tb);
 
@@ -54,8 +57,7 @@ public class ContactosActivity extends AppCompatActivity {
 
 
         if (getIntent().getExtras() != null) {
-            listagente.add(getIntent().getExtras().getInt("posicion"),
-                    getIntent().getExtras().getString("editado"));
+            listagente = (ArrayList<String>)getIntent().getExtras().get("lista");
         }
 
         adapter = new
@@ -70,7 +72,7 @@ public class ContactosActivity extends AppCompatActivity {
 
         lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+            public boolean onItemLongClick(AdapterView<?> parent, final View view, final int position, long id) {
 
                 AlertDialog dialogo;
                 AlertDialog.Builder constructor = new AlertDialog.Builder(c);
@@ -90,7 +92,8 @@ public class ContactosActivity extends AppCompatActivity {
                                 } else {
                                     Log.i("Mensaje", "Se tiene permiso!");
                                 }
-                                String numero = listagente.get(position);
+
+                                String numero = lv.getItemAtPosition(position).toString();
                                 numero = numero.substring((numero.indexOf("\n") + 1), numero.length());
                                 numero = numero.substring(0, numero.indexOf("\n"));
                                 try{
@@ -110,14 +113,14 @@ public class ContactosActivity extends AppCompatActivity {
                                 break;
                             case 2:
                                 Intent i = new Intent(c,EditarActivity.class);
-                                i.putExtra("contacto",listagente.get(position));
-                                i.putExtra("posicion",position);
+                                i.putExtra("lista",listagente);
+                                i.putExtra("contacto",lv.getItemAtPosition(position).toString());
                                 startActivity(i);
                                 ((Activity)c).finish();
                                 break;
                             case 3:
                                 Toast.makeText(c,"Eliminado",Toast.LENGTH_SHORT).show();
-                                listagente.remove(position);
+                                listagente.remove(lv.getItemAtPosition(position).toString());
                                 adapter.notifyDataSetChanged();
                                 break;
                         }
@@ -129,6 +132,21 @@ public class ContactosActivity extends AppCompatActivity {
                 dialogo.show();
 
                 return false;
+            }
+        });
+        buscar.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                ContactosActivity.this.adapter.getFilter().filter(s);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
             }
         });
 
@@ -197,8 +215,8 @@ public class ContactosActivity extends AppCompatActivity {
                     switch(Integer.parseInt(numberType)){
                         // inserta switch cases para manejar todos los tipos de
                         ///números de teléfono. Son 20 tipos.
-                        default:System.out.println("Número de teléfono: "+number
-                                +"("+numberType+")");
+                        default:
+                            //System.out.println("Número de teléfono: "+number+"("+numberType+")");
                             break;
                     }
                     telefono = number;
@@ -244,5 +262,15 @@ public class ContactosActivity extends AppCompatActivity {
         Collections.sort(datos);
         return datos;
     } // Find de consultaAgenda()
+
+
+    public void onClickInsertar(View v)
+    {
+        Intent i = new Intent(this,EditarActivity.class);
+        i.putExtra("lista",listagente);
+        i.putExtra("nuevo",true);
+        startActivity(i);
+        this.finish();
+    }
 
 }

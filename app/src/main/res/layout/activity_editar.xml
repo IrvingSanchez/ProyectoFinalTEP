@@ -14,7 +14,7 @@
         android:minHeight="?attr/actionBarSize"
         android:theme="@style/Base.ThemeOverlay.AppCompat.Dark.ActionBar"
         app:navigationIcon="?android:attr/homeAsUpIndicator"
-        app:title="Editar" />
+        app:title="Nuevo Contacto" />
 
     <LinearLayout
         android:layout_width="match_parent"
